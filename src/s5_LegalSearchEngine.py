@@ -95,29 +95,17 @@ class LegalSearchEngine:
         
         print(f"  ✓ BM25 인덱스 로딩 완료: {len(self.bm25_corpus)}개 문서")
     
-    def contains_article(self, content: str, article: str) -> bool:
-        """청크 내용에 특정 조(條)가 포함되어 있는지 확인"""
-        pattern = re.escape(article) + r'(?:\s|[^\w가-힣]|$)'
-        return bool(re.search(pattern, content))
-    
-    def contains_chapter(self, content: str, chapter: str) -> bool:
-        """청크 내용에 특정 장(章)이 포함되어 있는지 확인"""
-        pattern = re.escape(chapter) + r'(?:\s|[^\w가-힣]|$)'
-        return bool(re.search(pattern, content))
-    
     def vector_search(self, 
                      query: str,
-                     top_k: int = 10,
-                     filter_article: Optional[str] = None,
-                     filter_chapter: Optional[str] = None) -> List[Dict]:
-        """벡터 검색 + 법령 필터링 (텍스트 기반)"""
+                     top_k: int = 10) -> List[Dict]:
+        """벡터 검색"""
         if not self.embedding_manager:
             raise ValueError("EmbeddingManager가 필요합니다.")
         
         query_embedding = self.embedding_manager.embed_text(query)
         query_embedding = query_embedding.reshape(1, -1).astype('float32')
         
-        search_k = top_k * 10 if (filter_article or filter_chapter) else top_k
+        search_k = top_k * 10
         distances, indices = self.faiss_index.search(query_embedding, search_k)
         
         results = []
@@ -127,13 +115,7 @@ class LegalSearchEngine:
             
             item = self.metadata[idx]
             content = item["content"]
-            
-            if filter_article and not self.contains_article(content, filter_article):
-                continue
-            
-            if filter_chapter and not self.contains_chapter(content, filter_chapter):
-                continue
-            
+                        
             result = {
                 "rank": len(results) + 1,
                 "chunk_id": item["chunk_id"],
@@ -151,10 +133,8 @@ class LegalSearchEngine:
     
     def keyword_search(self,
                       query: str,
-                      top_k: int = 10,
-                      filter_article: Optional[str] = None,
-                      filter_chapter: Optional[str] = None) -> List[Dict]:
-        """키워드 검색 + 법령 필터링 (텍스트 기반)"""
+                      top_k: int = 10) -> List[Dict]:
+        """키워드 검색"""
         query_tokens = self.tokenize_korean(query)
         scores = self.bm25.get_scores(query_tokens)
         
@@ -167,13 +147,7 @@ class LegalSearchEngine:
             
             item = self.metadata[idx]
             content = item["content"]
-            
-            if filter_article and not self.contains_article(content, filter_article):
-                continue
-            
-            if filter_chapter and not self.contains_chapter(content, filter_chapter):
-                continue
-            
+                        
             result = {
                 "rank": len(results) + 1,
                 "chunk_id": item["chunk_id"],
@@ -184,7 +158,7 @@ class LegalSearchEngine:
             }
             results.append(result)
             
-            if len(results) >= top_k:
+            if len(results) >= top_k*10:
                 break
         
         return results
@@ -228,23 +202,15 @@ class LegalSearchEngine:
     
     def hybrid_search(self,
                      query: str,
-                     top_k: int = 10,
-                     filter_article: Optional[str] = None,
-                     filter_chapter: Optional[str] = None) -> List[Dict]:
+                     top_k: int = 10) -> List[Dict]:
         """하이브리드 검색 + 법령 필터링"""
         vector_results = self.vector_search(
             query, 
-            top_k=top_k*2,
-            filter_article=filter_article,
-            filter_chapter=filter_chapter
-        )
+            top_k=top_k)
         
         keyword_results = self.keyword_search(
             query,
-            top_k=top_k*2,
-            filter_article=filter_article,
-            filter_chapter=filter_chapter
-        )
+            top_k=top_k)
         
         hybrid_results = self.reciprocal_rank_fusion(vector_results, keyword_results)
         

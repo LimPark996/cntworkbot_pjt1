@@ -27,7 +27,8 @@ class EnhancedLegalQASystem:
             return self.search_engine.hybrid_search(query, top_k=top_k)
     
     def generate_answer(self, query: str, verbose: bool = True, 
-                    format_for_user: bool = True) -> Dict:
+                    format_for_user: bool = True,
+                progress_callback=None) -> Dict:
       """
       질문에 대한 답변 생성
       
@@ -35,10 +36,19 @@ class EnhancedLegalQASystem:
           query: 사용자 질문
           verbose: 진행 상황 출력 여부
           format_for_user: 사용자 친화적 답변 추가 여부
+          progress_callback: 진행 상황 업데이트 함수 (선택)
       
       Returns:
           답변 딕셔너리 (user_friendly_answer 포함)
       """
+
+      def update_progress(message: str):
+        """진행 상황 업데이트 헬퍼"""
+        if verbose:
+            print(f"  {message}")
+        if progress_callback:
+            progress_callback(message)
+        
       if verbose:
           print(f"\n{'='*80}")
           print(f"💬 질문: {query}")
@@ -47,10 +57,11 @@ class EnhancedLegalQASystem:
       # 1단계: GPT로 질문 유형 분류
       if verbose:
           print("\n[1단계] GPT 질문 유형 분류 중...")
-      
+      update_progress("🔍 GPT가 질문 유형을 분석하고 있습니다...")
       classification = self.classifier.classify(query)
       query_type = classification["query_type"]
-      
+      update_progress(f"✅ 유형 분류 완료: {query_type}")
+
       if verbose:
           print(f"  ✓ 유형: {query_type}")
           print(f"  ✓ 확신도: {classification['confidence']:.2f}")
@@ -72,7 +83,9 @@ class EnhancedLegalQASystem:
       if verbose:
           print("\n[3단계] 문서 검색 중...")
       
+      update_progress("📚 법령 데이터베이스를 검색하고 있습니다...")
       search_results = self._execute_search(query, search_strategy)
+      update_progress(f"✅ {len(search_results)}개 관련 문서 발견")
       
       if verbose:
           print(f"  ✓ {len(search_results)}개 문서 검색 완료")
@@ -80,9 +93,11 @@ class EnhancedLegalQASystem:
       # 4단계: GPT 답변 생성 (JSON)
       if verbose:
           print("\n[4단계] GPT 구조화 답변 생성 중...")
-      
+
+      update_progress("🤖 GPT가 법령을 분석하여 구조화된 답변을 작성 중...")
       answer = self._generate_answer(query, query_type, search_results, classification)
-      
+      update_progress("✅ 구조화 답변 완료")
+
       # 메타 정보 추가
       answer["_meta"] = {
           "query": query,
@@ -107,8 +122,9 @@ class EnhancedLegalQASystem:
       if format_for_user:
           if verbose:
               print("\n[5단계] 사용자 친화적 답변 변환 중...")
-          
+          update_progress("✍️ 사용자가 이해하기 쉬운 자연어로 변환 중...")
           answer["user_friendly_answer"] = self._format_for_user(answer)
+          update_progress("✅ 최종 답변 완성!")
           
           if verbose:
               print("  ✓ 사용자 답변 생성 완료")

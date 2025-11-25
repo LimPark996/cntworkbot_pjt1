@@ -378,21 +378,16 @@ if prompt := st.chat_input("질문을 입력하세요"):
         # ===== 1단계: 진행 상황 표시 =====
         with st.status("🤔 답변 생성 중...", expanded=True) as status:
             
-            # 질문 분류
-            st.write("🏷️ 질문 유형 분석 중...")
-            classification = classifier.classify(prompt)
-            query_type = classification["query_type"]
-            
-            # 문서 검색
-            st.write("📚 관련 문서 검색 중...")
-            search_results = engine.hybrid_search(prompt, top_k=5)
-            st.write(f"   ✅ {len(search_results)}개 문서 발견")
-            
-            # GPT 답변 생성
-            st.write("✍️ GPT 답변 생성 중...")
-            answer = qa_system.generate_answer(prompt, verbose=False, format_for_user=True)
-            st.write("   ✅ 답변 생성 완료!")
-            
+            def progress_cb(msg):
+                st.write(msg)
+    
+            answer = qa_system.generate_answer(
+                prompt, 
+                verbose=False, 
+                format_for_user=True,
+                progress_callback=progress_cb
+            )
+    
             status.update(label="✅ 답변 완료!", state="complete", expanded=False)
         
         # ===== 2단계: 답변 타입 확인 =====
