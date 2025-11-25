@@ -135,27 +135,27 @@ class QueryClassifier:
         strategies = {
             "법조문_조회": {
                 "search_method": "hybrid",
-                "top_k": 5
+                "top_k": 2
             },
             "일반_정보_검색": {
                 "search_method": "hybrid",
-                "top_k": 10
+                "top_k": 2
             },
             "상황별_컨설팅": {
                 "search_method": "hybrid",
-                "top_k": 15
+                "top_k": 2
             },
             "절차_안내": {
                 "search_method": "hybrid", 
-                "top_k": 10
+                "top_k": 2
             },
             "문서_생성": {
                 "search_method": "hybrid",
-                "top_k": 20
+                "top_k": 2
             },
             "비교_분석": {
                 "search_method": "hybrid",
-                "top_k": 12
+                "top_k": 2
             }
         }
         
