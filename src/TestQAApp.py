@@ -408,6 +408,16 @@ if prompt := st.chat_input("질문을 입력하세요"):
         st.session_state.document_title = 제목        
         # 화면에 표시할 간단한 텍스트
         display_text = f"📄 {제목} 문서가 생성되었습니다. 위 편집기에서 수정 후 다운로드하세요."    
+
+        # 세션에 저장
+        st.session_state.messages.append({
+            "role": "assistant", 
+            "content": display_text,
+            "full_answer": answer
+        })
+        
+        # 페이지 새로고침
+        st.rerun()
     else:
         display_text = answer.get("user_friendly_answer", "답변을 생성했습니다.")
 
