@@ -319,6 +319,9 @@ if st.session_state.current_document:
     st.markdown("---")
     st.markdown("### 📝 문서 편집기")
     
+    if "document_saved" not in st.session_state:
+        st.session_state.document_saved = True  # 처음 생성 시는 저장된 상태
+    
     col1, col2 = st.columns([3, 1])
     
     with col1:
@@ -328,26 +331,51 @@ if st.session_state.current_document:
             height=400,
             key="document_editor"
         )
-    
+        content_changed = (edited_content != st.session_state.current_document)
+
+        if content_changed:
+            st.warning("⚠️ 저장중입니다.")
+
     with col2:
+        st.markdown("**✏️ 편집**")
+        
+        # 저장 버튼
+        if st.button("💾 저장하기", use_container_width=True, type="primary"):
+            st.session_state.current_document = edited_content
+            st.session_state.document_saved = True
+            st.success("✅ 저장됨!")
+            st.rerun()
+        
+        st.markdown("---")
         st.markdown("**📥 다운로드**")
         
+        # 저장 안 된 상태면 경고
+        if content_changed:
+            st.caption("⚠️ 먼저 저장해주세요")
+        
+        # TXT 다운로드
         st.download_button(
             label="💾 TXT 저장",
-            data=edited_content.encode('utf-8'),
+            data=st.session_state.current_document.encode('utf-8'),
             file_name=f"{st.session_state.document_title}.txt",
             mime="text/plain",
-            use_container_width=True
+            use_container_width=True,
+            disabled=content_changed  # 변경사항 있으면 비활성화
         )
         
+        # PDF 다운로드
         try:
-            pdf_buffer = create_pdf(st.session_state.document_title, edited_content)
+            pdf_buffer = create_pdf(
+                st.session_state.document_title, 
+                st.session_state.current_document
+            )
             st.download_button(
                 label="📄 PDF 저장",
                 data=pdf_buffer,
                 file_name=f"{st.session_state.document_title}.pdf",
                 mime="application/pdf",
-                use_container_width=True
+                use_container_width=True,
+                disabled=content_changed  # 변경사항 있으면 비활성화
             )
         except Exception as e:
             st.warning(f"PDF 생성 실패: {e}")
@@ -358,7 +386,6 @@ if st.session_state.current_document:
             st.session_state.current_document = None
             st.session_state.document_title = ""
             st.rerun()
-
 
 # ============================================================
 # 💬 새로운 질문 입력 처리
