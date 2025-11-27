@@ -77,13 +77,11 @@ class LegalSearchEngine:
                 target_pattern = doc_pattern
                 break
         
-        # 키워드 없으면 기본값 = 건축법 본법 (시행령/시행규칙 제외)
+        # 키워드 없으면 필터링 없음
         if not target_pattern:
-            target_pattern = r'건축법'
-            exclude_pattern = r'시행령|시행규칙'
-        else:
-            exclude_pattern = None
-        
+            return results
+
+        exclude_pattern = None
         # 필터링
         filtered = []
         for r in results:
