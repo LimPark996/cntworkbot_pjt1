@@ -2,6 +2,8 @@
 
 건설사 실무진을 위한 법령 검색 및 문서 생성 RAG 챗봇입니다.
 
+![건축 관련 규제 문서 요약 및 준수계획 초안 작성 AI Agent - 시연 영상](https://github.com/user-attachments/assets/b7d101f7-4025-4f52-bf28-7726cd68dfe2)
+
 ---
 
 ## ✨ 주요 기능
