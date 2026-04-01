@@ -6,8 +6,17 @@ __pycache__/
 
 # 환경 변수
 .env
+.env.*
 
 # IDE
 .vscode/
 .idea/
 
+# 바이너리 / 캐시 데이터
+*.pkl
+*.bin
+*.faiss
+
+# OS
+.DS_Store
+Thumbs.db
